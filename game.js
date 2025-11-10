@@ -287,6 +287,13 @@ function startNewGame(options) {
     bot2CardCount.textContent = '0';
     bot3CardCount.textContent = '0';
     
+    gameBoard.classList.remove('players-3', 'players-4'); 
+    if (options.playerCount === 3) {
+        gameBoard.classList.add('players-3');
+    } else if (options.playerCount === 4) {
+        gameBoard.classList.add('players-4');
+    }
+    
     switchScreen('game-board');
     
     const deck = createDeck();
@@ -1430,7 +1437,7 @@ btnSortCards.addEventListener('click', () => {
         sortableInstance.option('disabled', false); 
         
         // 2. Ubah tombol
-        btnSortCards.textContent = "✅ Selesai Susun";
+        btnSortCards.textContent = "Selesai Susun";
         btnSortCards.style.backgroundColor = "#4CAF50"; 
         
         // 3. Sembunyikan tombol game & hint
