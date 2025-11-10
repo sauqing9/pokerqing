@@ -15,8 +15,8 @@ html, body {
 
 /* Struktur layar utama */
 .screen {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -650,3 +650,209 @@ button:disabled {
 
 .card.red { color: #ff0000; }
 .card.black { color: #000000; }
+
+
+/* ======================================= */
+/* == TAMBAHAN: Perbaikan Responsif HP == */
+/* ======================================= */
+
+@media screen and (max-width: 425px) {
+
+  /* ===============================================
+  == PERUBAHAN UTAMA UNTUK LAYOUT HP ==
+  ===============================================
+  */
+  #game-board {
+    /* Ubah prioritas: Kunci baris atas & tengah, sisa ruang untuk pemain (1fr) */
+    grid-template-rows: auto auto 1fr;
+  }
+  
+  /* PERBAIKAN 1: Kecilkan min-width kolom samping agar 4 kartu muat */
+  .grid-area-left, .grid-area-right {
+    min-width: 70px; /* Turun dari 90px */
+  }
+
+  /* ===============================================
+  == PERUBAHAN KARTU AGAR MUAT 4 PER BARIS ==
+  ===============================================
+  */
+
+  /* Kecilkan ukuran kartu */
+  .card, .card-back {
+    width: 55px;  /* Turun dari 60px */
+    height: 87px; /* Turun dari 95px (menjaga rasio) */
+    margin: 2px;  /* Turun dari 3px */
+    font-size: 1em; /* Turun dari 1.1em */
+  }
+
+  .card .suit {
+    font-size: 1.8em; /* Turun dari 2em */
+  }
+
+  /* Sesuaikan lebar kartu belakang */
+  .card-back {
+    width: 60px; /* Turun dari 65px */
+  }
+
+  /* Sesuaikan tumpukan kartu bot (horizontal) */
+  .bot-hand.top .card-back {
+    margin-left: -50px; /* Turun dari -55px */
+  }
+
+  /* Sesuaikan tumpukan kartu bot (vertikal) */
+  .bot-hand.left .card-back,
+  .bot-hand.right .card-back {
+    margin-top: -82px; /* Dibuat lebih tumpang tindih (87px height - 5px reveal) */
+  }
+
+  /* ===============================================
+  == AREA KARTU PEMAIN (4 KOLOM) ==
+  ===============================================
+  */
+  .grid-area-player {
+    /* PERBAIKAN: Menggunakan Grid untuk 4 kolom */
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-content: start; /* Mulai dari atas */
+    justify-items: center; /* Kartu di tengah slot kolom */
+    gap: 4px 2px; /* Jarak vertikal 4px, horizontal 2px */
+
+    /* Hapus/override properti flex dari desktop */
+    justify-content: normal;
+    flex-wrap: normal;
+    align-items: normal;
+    
+    /* (87px card + 4px gap) * 4 baris + 10px padding = 374px */
+    min-height: 375px;
+    padding: 5px;
+  }
+
+  /* Nonaktifkan margin default kartu di .grid-area-player */
+  .grid-area-player .card {
+    margin: 0 !important;
+  }
+  /* ===============================================
+  == AKHIR PERUBAHAN 4 KOLOM ==
+  ===============================================
+  */
+
+  .grid-area-top {
+    min-height: 100px; /* Turun dari 110px */
+  }
+  
+  /* ===============================================
+  == PERBAIKAN AREA KARTU TENGAH (PILE) - DINAMIS ==
+  ===============================================
+  */
+  
+  /* Untuk 3 PEMAIN (Layout 3-2) */
+  #game-board.players-3 .grid-area-pile {
+    /* 1. Beri ruang untuk 2 BARIS kartu (87*2) */
+    min-height: 195px; 
+    
+    /* 2. Paksa lebar area agar HANYA MUAT 3 KARTU */
+    /* (Lebar 3 kartu: ~177px. Lebar 4 kartu: ~236px) */
+    max-width: 230px; 
+    
+    /* 3. Center "box" ini */
+    margin: 5px auto; 
+    
+    /* 4. Standar wrapping */
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    justify-content: center; 
+    align-items: flex-start;
+    align-content: flex-start;
+  }
+
+  /* Untuk 4 PEMAIN (Layout 2-2-1) */
+  #game-board.players-4 .grid-area-pile {
+    /* 1. Beri ruang untuk 3 BARIS kartu (87*3) */
+    min-height: 295px; 
+    
+    /* 2. Paksa lebar area agar HANYA MUAT 2 KARTU */
+    /* (Lebar 3 kartu: ~177px) */
+    max-width: 176px; 
+    
+    /* 3. Center "box" ini */
+    margin: 5px auto; 
+    
+    /* 4. Standar wrapping */
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    justify-content: center; 
+    align-items: flex-start;
+    align-content: flex-start;
+  }
+
+  /* ===============================================
+  == PERBAIKAN TOMBOL & UI LAINNYA ==
+  ===============================================
+  */
+
+  /* Perbaiki tombol kontrol di kolom kiri agar tidak terpotong */
+  .grid-area-controls button {
+    width: 100%; /* Lebar penuh mengisi kolom (yg 1fr) */
+    min-width: 60px; /* Jaga agar tidak terlalu kecil */
+    font-size: 0.9em; /* Kecilkan font agar muat */
+    padding: 8px 5px; /* Kurangi padding horizontal */
+    margin: 3px 0; /* Kurangi margin */
+    box-sizing: border-box; /* Penting! */
+  }
+
+  /* Pastikan ID tombol juga ikut aturan di atas */
+  #btn-play-card,
+  #btn-unselect,
+  #btn-kombo-chance {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Perbaiki modal Layar Akhir agar tidak keluar layar */
+  #end-game-content {
+    min-width: 0; /* Hapus min-width 300px */
+    width: 90vw; /* Lebar = 90% layar */
+    max-width: 320px; /* Maksimal 320px */
+    padding: 20px 15px; /* Kurangi padding horizontal */
+    box-sizing: border-box;
+  }
+  
+  /* Perbaiki modal Menu Jeda */
+  #in-game-menu-content {
+      width: 80vw; /* Lebar = 80% layar */
+      max-width: 250px; /* Maksimal 250px */
+      padding: 20px 15px;
+      box-sizing: border-box;
+  }
+  
+  /* Buat tombol di menu jeda mengisi modal */
+  #in-game-menu-content button {
+      width: 100%;
+  }
+  
+  #main-menu h1 {
+    font-size: 3.2em; /* Kecilkan sedikit judul utama */
+  }
+  
+  /* Geser tombol burger agar lebih ke pojok */
+  #btn-in-game-menu {
+    top: 5px;
+    right: 5px;
+    padding: 3px 8px;
+    font-size: 1.4em;
+  }
+  
+  /* ===============================================
+  == PERBAIKAN MODE SUSUN KARTU (MOBILE) ==
+  ===============================================
+  */
+  /*
+    Saat mode susun, kita HANYA ingin margin-nya
+    tetap 0 seperti grid mobile biasa.
+  */
+  .grid-area-player.sorting-mode .card {
+    /* INI KUNCINYA: Paksa margin kembali ke 0 */
+    margin: 0 !important;
+  }
+
+}
