@@ -92,8 +92,9 @@ let hintComboState = {
     hints: [] // Akan diisi dengan [combo1, combo2, ...]
 };
 let komboChanceState = { index: 0, hints: [] };
-
 const GAME_STATE_KEY = 'pokerGameStateV39';
+
+let isGameActive = false;
 
 // ===================================
 // FUNGSI UTAMA GAME (Membuat & Membagi Kartu)
@@ -170,6 +171,7 @@ function find3sShowWinner(allPlayer3s) {
     return topContenders[0];
 }
 function initiatePlayAll3sPhase() {
+    if (!isGameActive) return;
     let allPlayed3s = [];
     let playerContributions = [];
     let showMessage = "--- FASE BUANG KARTU 3 ---\n";
@@ -199,7 +201,7 @@ function initiatePlayAll3sPhase() {
 
     gameState.lastPlayerToPlay = winner.playerIndex;
     gameState.currentPlayerIndex = winner.playerIndex;
-    gameState.isFirstTurn = false;
+    // gameState.isFirstTurn = false;
     gameState.currentPlayPile = [];
 
     const winnerName = (winner.playerIndex === 0) ? "Anda" : `Bot ${winner.playerIndex}`;
@@ -221,7 +223,7 @@ function initiatePlayAll3sPhase() {
         runBotTurn(gameState.currentPlayerIndex);
     } else {
         btnPlayCard.disabled = false;
-        btnSkipTurn.disabled = false;
+        btnSkipTurn.disabled = gameState.isFirstTurn || (gameState.lastPlayerToPlay === gameState.currentPlayerIndex);
         setButtonState('red');
         validatePlayerSelection();
     }
@@ -243,7 +245,7 @@ function skipAdu3Phase(startingPlayerIndex) {
     // Atur Juara 1 sebagai pemain pertama
     gameState.lastPlayerToPlay = startingPlayerIndex;
     gameState.currentPlayerIndex = startingPlayerIndex;
-    gameState.isFirstTurn = false;
+//     gameState.isFirstTurn = false;
     gameState.currentPlayPile = [];
 
     const nextPlayerName = (gameState.currentPlayerIndex === 0) ? "Anda" : `Bot ${gameState.currentPlayerIndex}`;
@@ -260,7 +262,7 @@ function skipAdu3Phase(startingPlayerIndex) {
         runBotTurn(gameState.currentPlayerIndex);
     } else {
         btnPlayCard.disabled = false;
-        btnSkipTurn.disabled = false;
+        btnSkipTurn.disabled = gameState.isFirstTurn || (gameState.lastPlayerToPlay === gameState.currentPlayerIndex);
         validatePlayerSelection();
     }
 }
@@ -271,6 +273,7 @@ function skipAdu3Phase(startingPlayerIndex) {
  * Ini menggantikan 90% logika btnStartGame.
  */
 function startNewGame(options) {
+    isGameActive = true; //
     // { difficulty, playerCount, startingPlayerIndex }
     clearGameState(); // Wajib hapus save lama
 
@@ -363,70 +366,112 @@ function isSeri(cards) {
     if (cards.length !== 3) return false;
     return isStraight(cards) && isFlush(cards);
 }
+/**
+ * DIPERBARUI (Termasuk perbaikan 'Seri Buntut Tipe 2')
+ * Mendapatkan detail kombo dari kartu yang dipilih.
+ */
 function getComboDetails(cards) {
-    if (!cards || cards.length === 0) return { type: 'invalid' };
-    cards.sort((a, b) => a.value - b.value);
-    const len = cards.length;
-    const counts = getRankCounts(cards);
-    const ranks = Object.keys(counts);
-    if (len === 5) {
-        const straight = isStraight(cards);
-        const flush = isFlush(cards);
-        const highCard = cards[len - 1];
-        if (straight && flush) {
-            return { type: 'straight-flush', value: highCard.value, cards: cards, isBomb: true };
-        }
-        if (ranks.length === 2 && (counts[ranks[0]] === 3 || counts[ranks[1]] === 3)) {
-            const trisRank = (counts[ranks[0]] === 3) ? ranks[0] : ranks[1];
-            const trisHighCard = cards.findLast(c => c.rank === trisRank);
-            return { type: 'full-house', value: trisHighCard.value, cards: cards };
-        }
-        if (flush) {
-            return { type: 'flush', value: highCard.value, cards: cards };
-        }
-        if (straight) {
-            return { type: 'straight', value: highCard.value, cards: cards };
-        }
-        let pairRank = null;
+    if (!cards || cards.length === 0) return { type: 'invalid' };
+    cards.sort((a, b) => a.value - b.value);
+    const len = cards.length;
+    const counts = getRankCounts(cards);
+    const ranks = Object.keys(counts);
+    if (len === 5) {
+        const straight = isStraight(cards);
+        const flush = isFlush(cards);
+        const highCard = cards[len - 1];
+        if (straight && flush) {
+            return { type: 'straight-flush', value: highCard.value, cards: cards, isBomb: true };
+        }
+        if (ranks.length === 2 && (counts[ranks[0]] === 3 || counts[ranks[1]] === 3)) {
+            const trisRank = (counts[ranks[0]] === 3) ? ranks[0] : ranks[1];
+            const trisHighCard = cards.findLast(c => c.rank === trisRank);
+            return { type: 'full-house', value: trisHighCard.value, cards: cards };
+        }
+        if (flush) {
+            return { type: 'flush', value: highCard.value, cards: cards };
+        }
+        if (straight) {
+            return { type: 'straight', value: highCard.value, cards: cards };
+        }
+        
+        // --- LOGIKA 'SERI BUNTUT' (TIPE 1: [Seri] + [1-Pair murni]) ---
+        // Contoh: [4C, 5C, 6C, 7H, 7S]
+        let pairRank = null;
+        for (const rank in counts) {
+            if (counts[rank] === 2) { pairRank = rank; break; }
+        }
+        if (pairRank) {
+            const otherCards = cards.filter(c => c.rank !== pairRank);
+            if (isSeri(otherCards)) {
+                // 'value' harus dari 'Seri' agar adil
+                return { type: 'seri-buntut', value: otherCards[2].value, cards: cards };
+            }
+        }
+
+        // --- PERBAIKAN: LOGIKA 'SERI BUNTUT' (TIPE 2: [Seri] + [Pair dari Tris]) ---
+        // Contoh: [4C, 5C, 6C, 6H, 6S]
+        let trisRank = null;
         for (const rank in counts) {
-            if (counts[rank] === 2) { pairRank = rank; break; }
+            if (counts[rank] === 3) { trisRank = rank; break; }
         }
-        if (pairRank) {
-            const otherCards = cards.filter(c => c.rank !== pairRank);
-            if (isSeri(otherCards)) {
-                return { type: 'seri-buntut', value: otherCards[2].value, cards: cards };
+
+        if (trisRank) {
+            // Kasus: trisRank = '6'.
+            
+            // 1. Ambil 2 kartu sisa (non-Tris)
+            const sisaCards = cards.filter(c => c.rank !== trisRank); // e.g., [4C, 5C]
+            
+            // 2. Ambil 3 kartu Tris
+            const trisCards = cards.filter(c => c.rank === trisRank); // [6C, 6H, 6S]
+            
+            // 3. Coba gabungkan sisaCards dengan SETIAP kartu Tris
+            //    untuk melihat apakah ada yang membentuk 'Seri'
+            for (const trisCard of trisCards) {
+                const potentialSeri = [...sisaCards, trisCard]; // e.g., [4C, 5C, 6C]
+                potentialSeri.sort((a,b) => a.value - b.value); // Urutkan lagi
+
+                if (isSeri(potentialSeri)) {
+                    // Ditemukan! [4C, 5C, 6C] adalah Seri.
+                    // 2 kartu sisanya (6H, 6S) OTOMATIS adalah Pair.
+                    
+                    // 'value' harus dari Seri, bukan dari Pair.
+                    return { type: 'seri-buntut', value: potentialSeri[2].value, cards: cards };
+                }
             }
         }
-    }
-    if (len === 4) {
-        if (ranks.length === 1) {
-            return { type: '4-of-a-kind', value: cards[3].value, cards: cards, isBomb: true };
-        }
-        if (ranks.length === 2 && counts[ranks[0]] === 2 && counts[ranks[1]] === 2) {
-            const rankVal1 = RANK_VALUES[ranks[0]];
-            const rankVal2 = RANK_VALUES[ranks[1]];
-            if (Math.abs(rankVal1 - rankVal2) === 1) {
-                return { type: 'bro-sis', value: cards[3].value, cards: cards };
-            }
-        }
-    }
-    if (len === 3) {
-        if (ranks.length === 1) {
-            return { type: 'tris', value: cards[2].value, cards: cards };
-        }
-        if (isStraight(cards) && isFlush(cards)) {
-            return { type: 'seri', value: cards[2].value, cards: cards };
-        }
-    }
-    if (len === 2) {
-        if (ranks.length === 1) {
-            return { type: '1-pair', value: cards[1].value, cards: cards };
-        }
-    }
-    if (len === 1) {
-        return { type: 'one-card', value: cards[0].value, cards: cards };
-    }
-    return { type: 'invalid' };
+        // --- AKHIR PERBAIKAN ---
+
+    }
+    if (len === 4) {
+        if (ranks.length === 1) {
+            return { type: '4-of-a-kind', value: cards[3].value, cards: cards, isBomb: true };
+        }
+        if (ranks.length === 2 && counts[ranks[0]] === 2 && counts[ranks[1]] === 2) {
+            const rankVal1 = RANK_VALUES[ranks[0]];
+            const rankVal2 = RANK_VALUES[ranks[1]];
+            if (Math.abs(rankVal1 - rankVal2) === 1) {
+                return { type: 'bro-sis', value: cards[3].value, cards: cards };
+            }
+        }
+  }
+    if (len === 3) {
+        if (ranks.length === 1) {
+            return { type: 'tris', value: cards[2].value, cards: cards };
+        }
+        if (isStraight(cards) && isFlush(cards)) {
+            return { type: 'seri', value: cards[2].value, cards: cards };
+        }
+    }
+    if (len === 2) {
+        if (ranks.length === 1) {
+            return { type: '1-pair', value: cards[1].value, cards: cards };
+        }
+    }
+    if (len === 1) {
+        return { type: 'one-card', value: cards[0].value, cards: cards };
+}
+    return { type: 'invalid' };
 }
 
 // ===================================
@@ -862,89 +907,132 @@ function chooseCounterPlay(allCounters, pileCombo, playerIndex) {
  * DIPERBARUI (Perbaikan Bug V10):
  * Menjalankan giliran Bot
  */
+/**
+ * DIPERBARUI (termasuk logika V34 dan perbaikan "Paksa Main")
+ * Menjalankan giliran Bot
+ */
 function runBotTurn(playerIndex) {
     console.log(`Bot ${playerIndex} (${gameState.difficulty}) sedang berpikir...`);
     const hand = gameState.playerHands[playerIndex];
     const pileCombo = gameState.currentPlayPile.length > 0 ? getComboDetails(gameState.currentPlayPile) : null;
     
+    // --- TAMBAHAN BARU: Tentukan Aturan ---
+    const isOpeningTurn = (!pileCombo || pileCombo.type === 'invalid');
+    const isFirstTurnOfRound = gameState.isFirstTurn || (gameState.lastPlayerToPlay === playerIndex);
+    // --- AKHIR TAMBAHAN ---
+
     let playToMake = null;
 
-    // --- INI PERBAIKANNYA ---
-    if (pileCombo && pileCombo.type !== 'invalid') {
+    if (isOpeningTurn) {
+        // --- LOGIKA BABAK BARU (MEJA KOSONG) ---
+        const allOpeners = findAllOpeningCombos(hand);
+        playToMake = chooseOpeningPlay(allOpeners, hand, playerIndex);
+
+        // --- TAMBAHAN BARU: Logika Paksa Main ---
+        // Jika AI (chooseOpeningPlay) memutuskan 'Skip' (null)...
+        if (playToMake === null) {
+            // ...dan ini adalah babak baru (ilegal skip)...
+            if (isFirstTurnOfRound) {
+                // Bot TIDAK BOLEH SKIP.
+                console.warn(`Bot ${playerIndex}: AI ingin Skip di babak baru (ilegal). Memaksa main kartu terlemah...`);
+                
+                if (allOpeners.length > 0) {
+                    // Paksa mainkan kombo terlemah (misal 10-H, atau '2' jika terpaksa)
+                    playToMake = allOpeners[0]; 
+                    console.warn(`Bot ${playerIndex}: Terpaksa main ${playToMake.type} (value: ${playToMake.value})`);
+                } else {
+                    console.error(`Bot ${playerIndex}: STUCK! Tidak punya kartu untuk dipaksa main.`);
+                    // (Biarkan null, dia akan skip untuk mencegah crash)
+                }
+            }
+        }
+        // --- AKHIR TAMBAHAN ---
+
+    } else {
         // --- LOGIKA MELAWAN KARTU ---
         // 'pileCombo' adalah kombo valid, cari kartu lawan
         const allCounters = findPossibleCounters(hand, pileCombo);
         playToMake = chooseCounterPlay(allCounters, pileCombo, playerIndex);
-    
-    } else {
-        // --- LOGIKA BABAK BARU (MEJA KOSONG) ---
-        // (Ini terjadi jika pileCombo 'null' ATAU 'invalid')
-        const allOpeners = findAllOpeningCombos(hand);
-        playToMake = chooseOpeningPlay(allOpeners, hand, playerIndex);
-    }
+    }
 
-    // --- TAMBAHAN BARU (V34): VALIDASI KARTU '2' UNTUK BOT ---
+
+    // --- PERUBAHAN V34: VALIDASI KARTU '2' UNTUK BOT ---
     if (playToMake) { // Jika Bot menemukan sebuah langkah
-        const remainingCardsCount = hand.length - playToMake.cards.length;
+        
+        // --- TAMBAHAN BARU: Cek Aturan ---
+        // Hanya jalankan validasi '2' JIKA ini BUKAN babak baru
+        if (!isFirstTurnOfRound) {
+        // --- AKHIR TAMBAHAN ---
 
-        // Cek 1: Apakah ini langkah terakhir? (Logika V32)
-        if (remainingCardsCount === 0) {
-            const isAllTwos = playToMake.cards.every(card => card.rank === '2');
-            if (isAllTwos && playToMake.cards.length < 5) {
-                console.log(`Bot ${playerIndex}: MAU JALAN ${playToMake.type} ('2') TAPI ILEGAL (Finish). SKIP.`);
-                playToMake = null; // Batalkan! Paksa Skip.
+            const remainingCardsCount = hand.length - playToMake.cards.length;
+
+            // Cek 1: Apakah ini langkah terakhir? (Logika V32)
+            if (remainingCardsCount === 0) {
+                const isAllTwos = playToMake.cards.every(card => card.rank === '2');
+                if (isAllTwos && playToMake.cards.length < 5) {
+                    console.log(`Bot ${playerIndex}: MAU JALAN ${playToMake.type} ('2') TAPI ILEGAL (Finish). SKIP.`);
+                    playToMake = null; // Batalkan! Paksa Skip.
+                }
             }
-        }
 
-        // Cek 2: Apakah langkah ini AKAN MENYISAKAN satu kartu '2'? (Logika V32)
-        if (remainingCardsCount === 1) {
-            // Temukan kartu yang TIDAK diseleksi
-            const remainingCard = hand.find(handCard => {
-                return !playToMake.cards.some(selectedCard => selectedCard.id === handCard.id);
-            });
+            // Cek 2: Apakah langkah ini AKAN MENYISAKAN satu kartu '2'? (Logika V32)
+            if (remainingCardsCount === 1) {
+                // Temukan kartu yang TIDAK diseleksi
+                const remainingCard = hand.find(handCard => {
+                    return !playToMake.cards.some(selectedCard => selectedCard.id === handCard.id);
+                });
 
-            if (remainingCard && remainingCard.rank === '2') {
-                console.log(`Bot ${playerIndex}: MAU JALAN ${playToMake.type} TAPI AKAN NYISA '2'. ILEGAL. SKIP.`);
-                playToMake = null; // Batalkan! Paksa Skip.
+                if (remainingCard && remainingCard.rank === '2') {
+                    console.log(`Bot ${playerIndex}: MAU JALAN ${playToMake.type} TAPI AKAN NYISA '2'. ILEGAL. SKIP.`);
+                    playToMake = null; // Batalkan! Paksa Skip.
+                }
             }
+
+        // --- TAMBAHAN BARU: Tutup Kurung ---
+        } else {
+            // Ini adalah babak baru, ABAIKAN semua aturan '2'.
+            console.log(`Bot ${playerIndex}: Babak baru, mengabaikan aturan 'sisa 2' & 'finish 2'.`);
         }
+        // --- AKHIR TAMBAHAN ---
     }
     // --- AKHIR VALIDASI V34 ---
     
     // Eksekusi pilihan
     if (playToMake) 
     {
-        // --- BARU: Cek Logika BOMB WIN untuk Bot ---
-        // (Kita perlu cek 'pileCombo' di sini SEBELUM 'setTimeout')
-        const isBotBombing = (
-            playToMake.type === 'straight-flush' || 
-            playToMake.type === '4-of-a-kind'
-        );
-        const isPileSingleTwo = (
-            pileCombo && // Pastikan pileCombo tidak null
-            pileCombo.type === 'one-card' && 
-            pileCombo.cards[0].rank === '2'
-        );
+        // --- BARU: Cek Logika BOMB WIN untuk Bot ---
+        // (Kita perlu cek 'pileCombo' di sini SEBELUM 'setTimeout')
+        const isBotBombing = (
+            playToMake.type === 'straight-flush' || 
+            playToMake.type === '4-of-a-kind'
+        );
+        const isPileSingleTwo = (
+            pileCombo && // Pastikan pileCombo tidak null
+            pileCombo.type === 'one-card' && 
+            pileCombo.cards[0].rank === '2'
+        );
 
-        if (isBotBombing && isPileSingleTwo) {
-            // Bot menang via BOMB!
-            console.log(`Bot ${playerIndex}: BOMB WIN!`);
-            setTimeout(() => {
-                handleBombWin(playerIndex, playToMake);
-            }, 1000 + Math.random() * 1000);
-            return; // HENTIKAN eksekusi! Jangan panggil playCards() normal.
-        }
-        // --- AKHIR LOGIKA BOMB WIN ---
+        if (isBotBombing && isPileSingleTwo) {
+            // Bot menang via BOMB!
+            console.log(`Bot ${playerIndex}: BOMB WIN!`);
+            setTimeout(() => {
+                handleBombWin(playerIndex, playToMake);
+            }, 1000 + Math.random() * 1000);
+            return; // HENTIKAN eksekusi! Jangan panggil playCards() normal.
+        }
+        // --- AKHIR LOGIKA BOMB WIN ---
 
-        // Bot memilih 'JALAN' (Normal, BUKAN bomb win)
-        setTimeout(() => {
-            console.log(`Bot ${playerIndex} memainkan ${playToMake.type} (value: ${playToMake.value})`);
-            playCards(playerIndex, playToMake.cards);
+        // Bot memilih 'JALAN' (Normal, BUKAN bomb win)
+        setTimeout(() => {
+            if (!isGameActive) return;
+            console.log(`Bot ${playerIndex} memainkan ${playToMake.type} (value: ${playToMake.value})`);
+            playCards(playerIndex, playToMake.cards);
         }, 1000 + Math.random() * 1000);
-        
-    } else {
+        
+    } else {
         // Bot memilih 'SKIP'
         setTimeout(() => {
+            if (!isGameActive) return;
             console.log(`Bot ${playerIndex} memilih 'Skip'.`);
             skipTurn(playerIndex);
         }, 1000);
@@ -985,6 +1073,7 @@ function playCards(playerIndex, cardsToPlay) {
             // Ini memaksa browser me-render tumpukan kartu (di atas)
             // SEBELUM alert() yang memblokir dijalankan.
             setTimeout(() => {
+                if (!isGameActive) return;
                 
                 // 2. Hitung dia juara ke berapa
                 const finishedCount = gameState.playerStatus.filter(s => s > 0).length;
@@ -1016,6 +1105,7 @@ function playCards(playerIndex, cardsToPlay) {
                     resultsMessage += `\nKalah: ${loserName}`;
 
                     setTimeout(() => {
+                        isGameActive = false;
                         clearGameState(); // Hapus save game
                         // Cari Juara 1 (pemenang)
                         lastGameWinnerIndex = gameState.playerStatus.findIndex(s => s === 1);
@@ -1074,6 +1164,7 @@ function handleBombWin(playerIndex, bombCombo) {
 
     // Beri jeda sedikit agar pemain bisa melihat apa yang terjadi
     setTimeout(() => {
+        isGameActive = false;
         clearGameState(); // Hapus save game
         lastGameWinnerIndex = playerIndex; // Pemenang adalah si pengebom
         endGameResultsElement.innerText = alertMessage; // Tampilkan hasil
@@ -1125,7 +1216,7 @@ function nextTurn() {
 
     if (nextPlayer === 0) {
         btnPlayCard.disabled = false;
-        btnSkipTurn.disabled = false;
+        btnSkipTurn.disabled = gameState.isFirstTurn || (gameState.lastPlayerToPlay === gameState.currentPlayerIndex);
         setButtonState('red');
         validatePlayerSelection();
     } else {
@@ -1286,7 +1377,7 @@ function loadAndResumeGame() {
     if (gameState.currentPlayerIndex === 0) {
         // Giliran Anda
         btnPlayCard.disabled = false;
-        btnSkipTurn.disabled = false;
+        btnSkipTurn.disabled = gameState.isFirstTurn || (gameState.lastPlayerToPlay === gameState.currentPlayerIndex);
         validatePlayerSelection(); // Cek kartu yg mungkin sudah di-select
     } else {
         // Giliran Bot
@@ -1397,6 +1488,7 @@ btnMenuRules.addEventListener('click', () => {
 
 // Tombol "Main Menu"
 btnMenuMain.addEventListener('click', () => {
+    isGameActive = false;
     clearGameState();
     inGameMenuOverlay.classList.add('hidden');
     inGameMenuOverlay.classList.remove('active');
@@ -1662,6 +1754,7 @@ btnPlayAgain.addEventListener('click', () => {
 });
 
 btnEndGameMainMenu.addEventListener('click', () => {
+    isGameActive = false;
     // (Kita sudah clearGameState() saat game berakhir, jadi tinggal pindah)
     endGameScreen.classList.add('hidden');
     endGameScreen.classList.remove('active');
