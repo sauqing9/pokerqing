@@ -1,0 +1,652 @@
+/* ======================================= */
+/* == Pengaturan Dasar & Layout Utama == */
+/* ======================================= */
+
+/* Pengaturan dasar tampilan halaman */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0c4b33;
+  color: white;
+  overflow: hidden;
+}
+
+/* Struktur layar utama */
+.screen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-sizing: border-box;
+}
+
+/* Transisi antar layar */
+.screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.95);
+}
+
+/* Utilitas menyembunyikan elemen */
+.hidden {
+  display: none !important;
+}
+
+/* Efek layar aktif */
+.screen.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Menyembunyikan kontrol hint */
+#hint-controls .hidden {
+  display: none;
+}
+
+/* ======================================= */
+/* == Tampilan Menu Utama & Bot Setup == */
+/* ======================================= */
+
+/* Judul menu utama */
+#main-menu h1 {
+  font-size: 3.5em;
+  color: #ffd700;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Gaya umum tombol */
+button {
+  font-size: 1.1em;
+  padding: 10px 20px;
+  margin: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: #333;
+  transition: background-color 0.2s, transform 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+/* Efek hover tombol */
+button:hover {
+  background-color: #ddd;
+  transform: translateY(-2px);
+}
+
+/* Gaya tombol nonaktif */
+button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hitungan combo hint */
+#hint-combo-count {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #333;
+  background-color: #ffd700;
+  padding: 0px 5px;
+  border-radius: 5px;
+  margin-left: 5px;
+}
+
+/* Tombol hint nonaktif */
+#hint-controls button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+/* Hitungan combo hint nonaktif */
+#hint-controls button:disabled #hint-combo-count {
+  background-color: #aaa;
+  color: #777;
+}
+
+/* Area pengaturan bot */
+#bot-setup {
+  background: rgba(0,0,0,0.2);
+  width: 100%;
+}
+
+/* Opsi pengaturan bot */
+.setup-option {
+  margin: 15px 0;
+  font-size: 1.2em;
+}
+
+/* Label opsi bot */
+.setup-option label {
+  margin-right: 10px;
+}
+
+/* Dropdown pengaturan bot */
+.setup-option select {
+  font-size: 1em;
+  padding: 5px;
+}
+
+/* ======================================= */
+/* == Papan Permainan (Game Board) == */
+/* ======================================= */
+
+/* Struktur grid papan permainan */
+#game-board {
+  display: grid;
+  grid-template-rows: 1fr 2fr auto;
+  grid-template-columns: 1fr 3fr 1fr;
+  grid-template-areas:
+    ". bot-top ."
+    "bot-left play-area bot-right"
+    "controls player-hand player-hand";
+  padding: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  justify-content: normal;
+  align-items: normal;
+}
+
+/* Area bot atas */
+.grid-area-top {
+  grid-area: bot-top;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 120px;
+}
+
+/* Area bot kiri */
+.grid-area-left {
+  grid-area: bot-left;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+}
+
+/* Area bot kanan */
+.grid-area-right {
+  grid-area: bot-right;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+}
+
+/* Area permainan tengah */
+.grid-area-pile {
+  grid-area: play-area;
+  border: 2px dashed #ffffff55;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px;
+  margin: 10px;
+  min-height: 140px;
+  align-content: flex-start;
+}
+
+/* Area kontrol permainan */
+.grid-area-controls {
+  grid-area: controls;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px;
+  align-self: start;
+}
+
+/* Tombol dalam area kontrol */
+.grid-area-controls button {
+  width: 120px;
+  margin: 4px 0;
+  display: block;
+}
+
+/* Area kartu pemain */
+.grid-area-player {
+  grid-area: player-hand;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow-y: auto;
+  min-height: 215px;
+  align-content: flex-start;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  width: 100%;
+  flex-grow: 1;
+  align-self: start;
+}
+
+/* Menyembunyikan bot ke-3 */
+#bot-3-container.hidden {
+  display: none;
+}
+
+/* ======================================= */
+/* == Informasi Pemain & Label Kartu == */
+/* ======================================= */
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  min-width: 80px;
+}
+
+.player-label {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.card-count {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+/* ======================================= */
+/* == Area Kartu Bot & Pemain == */
+/* ======================================= */
+
+.player-hand {
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.2);
+  width: 100%;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+#bot-2-hand {
+  justify-content: center;
+}
+
+#bot-1-hand, #bot-3-hand {
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 10px;
+}
+
+/* Kartu belakang bot */
+.bot-hand .card-back {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.bot-hand.top .card-back {
+  margin-left: -55px;
+}
+
+.bot-hand.top .card-back:first-child {
+  margin-left: 0;
+}
+
+.bot-hand.left .card-back,
+.bot-hand.right .card-back {
+  margin-top: -85px;
+}
+
+.bot-hand.left .card-back:first-child,
+.bot-hand.right .card-back:first-child {
+  margin-top: 5px;
+}
+
+/* ======================================= */
+/* == Status Permainan & Kontrol == */
+/* ======================================= */
+
+#game-status {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 1.1em;
+  background: rgba(0,0,0,0.5);
+  padding: 5px 10px;
+  border-radius: 5px;
+  z-index: 10;
+}
+
+/* ======================================= */
+/* == Tampilan Kartu (Depan & Belakang) == */
+/* ======================================= */
+
+.card, .card-back {
+  width: 60px;
+  height: 95px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  background-color: white;
+  color: black;
+  font-size: 1.1em;
+  font-weight: bold;
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px;
+  box-sizing: border-box;
+  margin: 3px;
+  flex-shrink: 0;
+}
+
+.my-hand .card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s;
+}
+
+.my-hand .card:hover {
+  transform: translateY(-15px);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.3);
+  z-index: 100;
+}
+
+.my-hand .card.selected {
+  transform: translateY(-25px);
+  border: 2px solid #007bff;
+  box-shadow: 0 5px 10px rgba(174, 198, 224, 0.5);
+}
+
+.card-back {
+  background: #444;
+  border: 1px solid #888;
+  width: 65px;
+}
+
+.card .rank {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+
+.card .suit {
+  font-size: 2em;
+  text-align: center;
+  line-height: 1;
+}
+
+.card .rank-bottom {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  transform: rotate(180deg);
+}
+
+/* ======================================= */
+/* == Mode Susun Kartu (Sorting Mode) == */
+/* ======================================= */
+
+.grid-area-player.sorting-mode {
+  background-color: #0000004d;
+  border: 2px dashed #ffd700;
+}
+
+.grid-area-player.sorting-mode .card {
+  margin-left: 3px !important;
+  margin-right: 3px !important;
+}
+
+.grid-area-player.sorting-mode .card:hover {
+  transform: translateY(-5px) !important;
+  z-index: 100;
+}
+
+.grid-area-player.sorting-mode .card.selected {
+  transform: translateY(-15px) !important;
+  border: 2px solid #00f7ff !important;
+  box-shadow: 0 5px 10px rgba(0, 247, 255, 0.5) !important;
+  z-index: 99;
+}
+
+/* Placeholder drag */
+.card.sortable-ghost {
+  opacity: 0.4;
+  background: #aabfff;
+}
+
+/* Kartu sedang di-drag */
+.card.sortable-dragging {
+  opacity: 0.9;
+  transform: scale(1.05) translateY(-15px) rotate(3deg) !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  z-index: 200;
+}
+
+/* ===============================================
+== BAGIAN HILANG YANG SAYA TAMBAHKAN KEMBALI ==
+===============================================
+*/
+.card.disabled {
+  /* 1. Buat jadi gelap/redup */
+  filter: brightness(0.5) grayscale(0.5);
+
+  /* 2. Matikan semua interaksi (klik, hover, dll) */
+  pointer-events: none;
+
+  /* 3. (Opsional) Tampilkan cursor 'not-allowed' */
+  cursor: not-allowed;
+}
+
+/* Pastikan kartu 'selected' juga jadi redup jika disabled */
+.card.disabled.selected {
+  transform: translateY(0); /* Jangan "pop out" */
+}
+/* ===============================================
+== AKHIR BAGIAN YANG HILANG ==
+===============================================
+*/
+
+
+/* ======================================= */
+/* == Tombol Jalan Dinamis == */
+/* ======================================= */
+
+#btn-play-card {
+  width: 120px;
+  margin: 4px 0;
+}
+
+#btn-play-card.btn-disabled-red {
+  background-color: #dc3545;
+  color: white;
+  opacity: 0.8;
+  border: 2px solid #ff7a88;
+}
+
+#btn-play-card.btn-enabled-green {
+  background-color: #28a745;
+  color: white;
+  opacity: 1;
+  border: 2px solid #7eff82;
+  transform: scale(1.05);
+}
+
+#btn-play-card:disabled {
+  background-color: #999 !important;
+  opacity: 0.6 !important;
+  color: #333 !important;
+  transform: scale(1) !important;
+  border: none !important;
+}
+
+/* ======================================= */
+/* == Menu Jeda (Pause Menu) == */
+/* ======================================= */
+
+#btn-in-game-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  font-size: 1.5em;
+  padding: 5px 12px;
+  margin: 0;
+  line-height: 1;
+}
+
+#in-game-menu-overlay {
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 2000;
+}
+
+#in-game-menu-content {
+  background-color: #0c4b33;
+  padding: 20px 40px;
+  border-radius: 10px;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 200px;
+}
+
+#in-game-menu-content h2 {
+  text-align: center;
+  margin-top: 0;
+  color: #ffd700;
+}
+
+#in-game-menu-content button {
+  width: 200px;
+  margin: 4px 0;
+}
+
+#in-game-menu-content .close-button {
+  background-color: #dc3545;
+  color: white;
+  margin-top: 20px;
+}
+
+#in-game-menu-content .close-button:hover {
+  background-color: #c82333;
+}
+
+/* ======================================= */
+/* == Layar Akhir Permainan == */
+/* ======================================= */
+
+#end-game-screen {
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 2000;
+}
+
+#end-game-content {
+  background-color: #0c4b33;
+  padding: 20px 40px;
+  border-radius: 10px;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 300px;
+}
+
+#end-game-content h2 {
+  text-align: center;
+  margin-top: 0;
+  color: #ffd700;
+}
+
+#end-game-results {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+  font-size: 1.1em;
+  text-align: left;
+  width: 100%;
+}
+
+.end-game-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+/* ======================================= */
+/* == Tombol Kombo Chance & Unselect == */
+/* ======================================= */
+
+#hint-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#kombo-chance-count {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #333;
+  background-color: #ffd700;
+  padding: 0px 5px;
+  border-radius: 5px;
+  margin-left: 5px;
+}
+
+#btn-kombo-chance:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+#btn-kombo-chance:disabled #kombo-chance-count {
+  background-color: #aaa;
+  color: #777;
+}
+
+#btn-unselect {
+  width: 120px;
+  margin: 4px 0;
+  background-color: #ffc107;
+  color: #333;
+}
+
+#btn-unselect:hover {
+  background-color: #e0a800;
+}
+
+#btn-unselect:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+/* ======================================= */
+/* == Warna Kartu Berdasarkan Jenis == */
+/* ======================================= */
+
+.card.red { color: #ff0000; }
+.card.black { color: #000000; }

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Poker (Capsa)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main-menu" class="screen active">
+        <h1>Game Poker</h1>
+        <button id="btn-play-bot">Mainkan dengan Bot</button>
+        <button id="btn-play-multiplayer" disabled>Mainkan Multiplayer (Segera)</button>
+        <button id="btn-rules" onclick="window.open('https://sauqing9.github.io/poker-rules/', '_blank')">Aturan Poker</button>
+    </div>
+
+    <div id="bot-setup" class="screen hidden">
+        <h2>Pengaturan Bot</h2>
+        <div class="setup-option">
+            <label for="select-difficulty">Kesulitan:</label>
+            <select id="select-difficulty">
+                <option value="easy">Mudah</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Sulit</option>
+            </select>
+        </div>
+        <div class="setup-option">
+            <label for="select-player-count">Jumlah Pemain:</label>
+            <select id="select-player-count">
+                <option value="4">4 Pemain</option>
+                <option value="3">3 Pemain</option>
+            </select>
+        </div>
+        <button id="btn-start-game">Mulai Permainan</button>
+        <button id="btn-back-to-menu">Kembali</button>
+    </div>
+
+    <div id="game-board" class="screen hidden">
+        <button id="btn-in-game-menu" class="game-menu-button">☰</button>
+
+        <div class="grid-area-top">
+            <div class="player-info">
+                <span id="bot-2-label" class="player-label">Bot 2</span>
+                <span id="bot-2-card-count" class="card-count">0</span>
+            </div>
+            <div id="bot-2-hand" class="player-hand bot-hand top"></div>
+        </div>
+
+        <div class="grid-area-left">
+            <div class="player-info">
+                <span id="bot-1-label" class="player-label">Bot 1</span>
+                <span id="bot-1-card-count" class="card-count">0</span>
+            </div>
+            <div id="bot-1-hand" class="player-hand bot-hand left"></div>
+        </div>
+
+        <div id="play-pile" class="grid-area-pile">
+            <div id="discard-pile-card" class="card hidden"></div>
+        </div>
+
+        <div id="bot-3-container" class="grid-area-right">
+            <div class="player-info">
+                <span id="bot-3-label" class="player-label">Bot 3</span>
+                <span id="bot-3-card-count" class="card-count">0</span>
+            </div>
+            <div id="bot-3-hand" class="player-hand bot-hand right"></div>
+        </div>
+
+        <div id="game-controls" class="grid-area-controls">
+            <div class="player-info">
+                <span id="player-label" class="player-label">Anda</span>
+                <span id="player-card-count" class="card-count">0</span>
+            </div>
+            <button id="btn-sort-cards">Susun Kartu</button>
+            <button id="btn-reset-sort" class="hidden">Reset Susun</button>
+            <button id="btn-kombo-chance" class="hidden">Kombo Chance<span id="kombo-chance-count">(0)</span></button>
+            <button id="btn-unselect" class="hidden">Unselect All</button>
+            <button id="btn-play-card">Jalan</button>
+            <button id="btn-skip-turn">Skip</button>
+            <div id="hint-controls">
+                <button id="btn-hint-pair" class="hidden">Hint</button>
+                <button id="btn-hint-combo" class="hidden">Hint Kombo<span id="hint-combo-count">(0)</span></button>
+            </div>
+        </div>
+
+        <div id="player-hand" class="player-hand my-hand grid-area-player"></div>
+
+        <div id="game-status">
+            <span id="current-player-status">...</span>
+        </div>
+
+        <div id="in-game-menu-overlay" class="screen hidden">
+            <div id="in-game-menu-content">
+                <h2>Menu</h2>
+                <button id="btn-menu-restart">Restart Game</button>
+                <button id="btn-menu-rules">Aturan Poker</button>
+                <button id="btn-menu-main">Kembali ke Menu Utama</button>
+                <button id="btn-menu-back" class="close-button">Kembali ke Game</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="end-game-screen" class="screen hidden">
+        <div id="end-game-content">
+            <h2>Game Selesai!</h2>
+            <div id="end-game-results"></div>
+            <div class="end-game-buttons">
+                <button id="btn-play-again">Main Lagi</button>
+                <button id="btn-end-game-main-menu">Menu Utama</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
