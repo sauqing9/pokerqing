@@ -10,7 +10,7 @@ html, body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #0c4b33;
   color: white;
-  overflow: hidden;
+  overflow: hidden; /* <-- Mengunci scroll ke samping */
 }
 
 /* Struktur layar utama */
@@ -99,6 +99,15 @@ button:disabled {
   border-radius: 5px;
   margin-left: 5px;
 }
+
+/* == PERBAIKAN V49: Buat tombol hint kombo jadi 2 baris == */
+#btn-hint-combo #hint-combo-count {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 2px;
+}
+/* ======================================================= */
 
 /* Tombol hint nonaktif */
 #hint-controls button:disabled {
@@ -466,8 +475,10 @@ button:disabled {
 /* == Tombol Jalan Dinamis == */
 /* ======================================= */
 
+/* == PERBAIKAN V49: Hapus 'width: 120px' == 
+   width akan diambil dari .grid-area-controls button
+*/
 #btn-play-card {
-  width: 120px;
   margin: 4px 0;
 }
 
@@ -614,6 +625,14 @@ button:disabled {
   margin-left: 5px;
 }
 
+/* == PERBAIKAN V49: Buat 2 baris juga == */
+#btn-kombo-chance #kombo-chance-count {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 2px;
+}
+
 #btn-kombo-chance:disabled {
   background-color: #999;
   cursor: not-allowed;
@@ -626,8 +645,8 @@ button:disabled {
   color: #777;
 }
 
+/* == PERBAIKAN V49: Hapus 'width: 120px' == */
 #btn-unselect {
-  width: 120px;
   margin: 4px 0;
   background-color: #ffc107;
   color: #333;
@@ -665,6 +684,7 @@ button:disabled {
   #game-board {
     /* Ubah prioritas: Kunci baris atas & tengah, sisa ruang untuk pemain (1fr) */
     grid-template-rows: auto auto 1fr;
+    min-height: 0; /* Mencegah #game-board melar */
   }
   
   /* PERBAIKAN 1: Kecilkan min-width kolom samping agar 4 kartu muat */
@@ -673,7 +693,7 @@ button:disabled {
   }
 
   /* ===============================================
-  == PERUBAHAN KARTU AGAR MUAT 4 PER BARIS ==
+  == PERUBAHAN KARTU AGAR MUAT 5 PER BARIS ==
   ===============================================
   */
 
@@ -706,13 +726,16 @@ button:disabled {
   }
 
   /* ===============================================
-  == AREA KARTU PEMAIN (4 KOLOM) ==
+  == AREA KARTU PEMAIN (4 atau 5 KOLOM) ==
   ===============================================
   */
   .grid-area-player {
-    /* PERBAIKAN: Menggunakan Grid untuk 4 kolom */
+    /* PERBAIKAN: Menggunakan Grid */
     display: grid;
+    
+    /* == PERUBAHAN V52: Default jadi 4 kolom (untuk 4 pemain) == */
     grid-template-columns: repeat(4, 1fr);
+    
     align-content: start; /* Mulai dari atas */
     justify-items: center; /* Kartu di tengah slot kolom */
     gap: 4px 2px; /* Jarak vertikal 4px, horizontal 2px */
@@ -722,17 +745,27 @@ button:disabled {
     flex-wrap: normal;
     align-items: normal;
     
-    /* (87px card + 4px gap) * 4 baris + 10px padding = 374px */
-    min-height: 375px;
+    /* Selalu bisa scroll jika butuh */
+    min-height: 0; 
+    overflow-y: auto;
+    
     padding: 5px;
   }
+
+  /* == PERUBAHAN V52: Aturan 5 kolom HANYA untuk 3 pemain == */
+  /* Ini akan jalan baik saat Start/Restart ATAU Refresh (JIKA JS SUDAH DIPERBAIKI) */
+  #game-board.players-3 .grid-area-player {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  /* ====================================================== */
+
 
   /* Nonaktifkan margin default kartu di .grid-area-player */
   .grid-area-player .card {
     margin: 0 !important;
   }
   /* ===============================================
-  == AKHIR PERUBAHAN 4 KOLOM ==
+  == AKHIR PERUBAHAN KOLOM ==
   ===============================================
   */
 
@@ -745,39 +778,15 @@ button:disabled {
   ===============================================
   */
   
-  /* Untuk 3 PEMAIN (Layout 3-2) */
-  #game-board.players-3 .grid-area-pile {
-    /* 1. Beri ruang untuk 2 BARIS kartu (87*2) */
-    min-height: 195px; 
-    
-    /* 2. Paksa lebar area agar HANYA MUAT 3 KARTU */
-    /* (Lebar 3 kartu: ~177px. Lebar 4 kartu: ~236px) */
-    max-width: 230px; 
-    
-    /* 3. Center "box" ini */
-    margin: 5px auto; 
-    
-    /* 4. Standar wrapping */
-    flex-wrap: wrap;
-    overflow-x: hidden;
-    justify-content: center; 
-    align-items: flex-start;
-    align-content: flex-start;
-  }
-
-  /* Untuk 4 PEMAIN (Layout 2-2-1) */
+  /* == PERBAIKAN V54: Samakan aturan 3 dan 4 pemain ==
+    Keduanya sekarang pakai max-width 230px (muat 3 kartu)
+    dan min-height 150px (pendek, tapi bisa tumbuh).
+  */
+  #game-board.players-3 .grid-area-pile,
   #game-board.players-4 .grid-area-pile {
-    /* 1. Beri ruang untuk 3 BARIS kartu (87*3) */
-    min-height: 295px; 
-    
-    /* 2. Paksa lebar area agar HANYA MUAT 2 KARTU */
-    /* (Lebar 3 kartu: ~177px) */
-    max-width: 176px; 
-    
-    /* 3. Center "box" ini */
+    min-height: 150px; 
+    max-width: 230px; /* <-- INI KUNCINYA. Muat 3 kartu (layout 3-2). */
     margin: 5px auto; 
-    
-    /* 4. Standar wrapping */
     flex-wrap: wrap;
     overflow-x: hidden;
     justify-content: center; 
@@ -789,24 +798,63 @@ button:disabled {
   == PERBAIKAN TOMBOL & UI LAINNYA ==
   ===============================================
   */
+  
+  /* == PERBAIKAN SCROLL & KONSISTENSI TOMBOL (V47) == 
+  */
+  .grid-area-controls {
+    align-self: stretch; /* Paksa meregang 100% di baris 1fr */
+    min-height: 0; /* Penting agar bisa menyusut */
+    overflow-y: auto; /* Scroll jika tombolnya tidak muat */
+    
+    /* INI KUNCINYA (1): 
+      Ganti 'align-items: center' (dari global) menjadi 'stretch'.
+      Ini memaksa direct children (seperti div#hint-controls)
+      untuk ikut 100% lebar.
+    */
+    align-items: stretch;
+  }
 
-  /* Perbaiki tombol kontrol di kolom kiri agar tidak terpotong */
+  /* Aturan ini (descendant selector) akan mengatur
+    SEMUA tombol di dalam .grid-area-controls,
+    termasuk #btn-hint-pair (yg ada di dalam div).
+  */
   .grid-area-controls button {
     width: 100%; /* Lebar penuh mengisi kolom (yg 1fr) */
     min-width: 60px; /* Jaga agar tidak terlalu kecil */
     font-size: 0.9em; /* Kecilkan font agar muat */
     padding: 8px 5px; /* Kurangi padding horizontal */
     margin: 3px 0; /* Kurangi margin */
-    box-sizing: border-box; /* Penting! */
+    box-sizing: border-box; /* PentING! */
   }
 
-  /* Pastikan ID tombol juga ikut aturan di atas */
-  #btn-play-card,
-  #btn-unselect,
-  #btn-kombo-chance {
-    width: 100%;
-    box-sizing: border-box;
+  /* == INI PERBAIKAN FINAL UNTUK TOMBOL HINT (V48) ==
+    INI KUNCINYA (2):
+    Kita paksa div pembungkus hint (#hint-controls)
+    untuk merentangkan anak-anaknya (tombol hint),
+    meng-override aturan global 'align-items: center'
+    yang bikin tombolnya menciut.
+  */
+  #hint-controls {
+    align-items: stretch;
   }
+  
+  /* == PERBAIKAN V50: Samakan Label Pemain (Biar Rapi) == */
+  .player-info {
+    width: 100%; /* Samakan 100% */
+    box-sizing: border-box; /* Samakan box-sizing */
+    min-width: 0; /* Hapus min-width desktop */
+    padding: 3px 5px; /* Kecilkan padding */
+    margin-bottom: 3px; /* Samakan margin */
+  }
+
+  .player-label {
+    font-size: 12px; /* Kecilkan font label */
+  }
+
+  .card-count {
+    font-size: 16px; /* Kecilkan font hitungan */
+  }
+  /* ======================================================= */
 
   /* Perbaiki modal Layar Akhir agar tidak keluar layar */
   #end-game-content {
@@ -819,15 +867,15 @@ button:disabled {
   
   /* Perbaiki modal Menu Jeda */
   #in-game-menu-content {
-      width: 80vw; /* Lebar = 80% layar */
-      max-width: 250px; /* Maksimal 250px */
-      padding: 20px 15px;
-      box-sizing: border-box;
+    width: 80vw; /* Lebar = 80% layar */
+    max-width: 250px; /* Maksimal 250px */
+    padding: 20px 15px;
+    box-sizing: border-box;
   }
   
   /* Buat tombol di menu jeda mengisi modal */
   #in-game-menu-content button {
-      width: 100%;
+    width: 100%;
   }
   
   #main-menu h1 {
