@@ -1243,6 +1243,13 @@ function loadAndResumeGame() {
     renderHands(gameState.playerCount);
     renderPlayPile();
 
+    gameBoard.classList.remove('players-3', 'players-4');
+    if (gameState.playerCount === 3) {
+        gameBoard.classList.add('players-3');
+    } else if (gameState.playerCount === 4) {
+        gameBoard.classList.add('players-4');
+    }
+
     // 3. Inisialisasi ulang SortableJS (WAJIB)
     if (sortableInstance) sortableInstance.destroy();
     sortableInstance = new Sortable(playerHandElement, {
